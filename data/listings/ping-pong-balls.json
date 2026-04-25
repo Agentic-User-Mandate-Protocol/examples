@@ -1,0 +1,12 @@
+{
+  "id": "listing_ping_pong_001",
+  "seller_id": "seller_123",
+  "title": "19 Ping Pong Balls",
+  "category": "hobby_supplies",
+  "description": "Nineteen ping pong balls for creative projects.",
+  "price": {
+    "currency": "USD",
+    "total_minor": 300
+  },
+  "pickup": "local"
+}

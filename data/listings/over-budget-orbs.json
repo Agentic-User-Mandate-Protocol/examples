@@ -1,0 +1,12 @@
+{
+  "id": "listing_orbs_007",
+  "seller_id": "seller_123",
+  "title": "Premium Possibility Orbs",
+  "category": "hobby_supplies",
+  "description": "A playful test listing priced above the mandate budget.",
+  "price": {
+    "currency": "USD",
+    "total_minor": 700
+  },
+  "pickup": "local"
+}

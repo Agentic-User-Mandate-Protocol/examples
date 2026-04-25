@@ -115,10 +115,15 @@ def _run_checkout_escalation(runtime: AumpRuntime) -> dict[str, Any]:
         context={"conditions": ["checkout_ready"]},
     )
     ucp_payload = {
-        "aump": {
-            "mandate_id": mandate_id,
-            "mandate_hash": runtime.resolve_mandate(mandate_id)["hash"],
-            "version": "0.1.0",
+        "meta": {
+            "ucp-agent": {
+                "profile": "https://platform.example/profiles/shopping-agent.json",
+            },
+            "aump": {
+                "mandate_id": mandate_id,
+                "mandate_hash": runtime.resolve_mandate(mandate_id)["hash"],
+                "version": "0.1.0",
+            },
         },
         "checkout": {
             "id": "checkout_123",

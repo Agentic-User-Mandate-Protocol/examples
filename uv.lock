@@ -12,6 +12,23 @@ wheels = [
 ]
 
 [[package]]
+name = "aump"
+version = "0.1.0"
+source = { editable = "../aump-py" }
+dependencies = [
+    { name = "jsonschema" },
+]
+
+[package.metadata]
+requires-dist = [{ name = "jsonschema", specifier = ">=4.23.0" }]
+
+[package.metadata.requires-dev]
+dev = [
+    { name = "pytest", specifier = ">=8.3.0" },
+    { name = "ruff", specifier = ">=0.14.0" },
+]
+
+[[package]]
 name = "aump-conformance"
 version = "0.1.0"
 source = { editable = "../conformance" }
@@ -33,6 +50,7 @@ name = "aump-examples"
 version = "0.1.0"
 source = { editable = "." }
 dependencies = [
+    { name = "aump" },
     { name = "aump-conformance" },
 ]
 
@@ -43,7 +61,10 @@ dev = [
 ]
 
 [package.metadata]
-requires-dist = [{ name = "aump-conformance", editable = "../conformance" }]
+requires-dist = [
+    { name = "aump", editable = "../aump-py" },
+    { name = "aump-conformance", editable = "../conformance" },
+]
 
 [package.metadata.requires-dev]
 dev = [

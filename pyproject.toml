@@ -9,6 +9,7 @@ authors = [
   { name = "Agentic User Mandate Protocol Authors" }
 ]
 dependencies = [
+  "aump",
   "aump-conformance"
 ]
 
@@ -29,6 +30,7 @@ build-backend = "hatchling.build"
 packages = ["src/aump_examples"]
 
 [tool.uv.sources]
+aump = { path = "../aump-py", editable = true }
 aump-conformance = { path = "../conformance", editable = true }
 
 [tool.ruff]

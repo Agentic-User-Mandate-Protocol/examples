@@ -5,7 +5,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Any
 
-from aump_examples.runtime import AumpRuntime, mandate_hash
+from aump import AumpRuntime, mandate_hash
 
 
 @dataclass

@@ -5,13 +5,13 @@ from __future__ import annotations
 from pathlib import Path
 from typing import Any
 
-from aump_conformance.bridges import validate_bridge
+from aump import AumpRuntime, validate_bridge
+from aump.policy import parse_datetime
 from aump_conformance.runner import run_suite
 
 from aump_examples.agents import BuyerAgent, SellerAgent
 from aump_examples.jsonio import load_json
 from aump_examples.paths import CONFORMANCE_FIXTURES, DATA_DIR
-from aump_examples.runtime import AumpRuntime
 
 
 def run_marketplace_proof() -> dict[str, Any]:
@@ -22,7 +22,10 @@ def run_marketplace_proof() -> dict[str, Any]:
         "ping_pong": load_json(DATA_DIR / "listings" / "ping-pong-balls.json"),
         "over_budget": load_json(DATA_DIR / "listings" / "over-budget-orbs.json"),
     }
-    runtime = AumpRuntime(mandates=mandates)
+    runtime = AumpRuntime(
+        mandates=mandates,
+        now=parse_datetime("2026-04-25T18:00:00Z"),
+    )
     buyer = BuyerAgent(runtime=runtime, mandate_id="aump_mnd_market_buyer_001")
     seller = SellerAgent(runtime=runtime, mandate_id="aump_mnd_market_seller_001")
 

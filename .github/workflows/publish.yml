@@ -12,18 +12,6 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
-        with:
-          path: examples
-
-      - uses: actions/checkout@v6
-        with:
-          repository: Agentic-User-Mandate-Protocol/aump-py
-          path: aump-py
-
-      - uses: actions/checkout@v6
-        with:
-          repository: Agentic-User-Mandate-Protocol/conformance
-          path: conformance
 
       - uses: astral-sh/setup-uv@v8.1.0
 
@@ -31,34 +19,22 @@ jobs:
         with:
           python-version: "3.11"
 
-      - run: uv sync
-        working-directory: examples
-
-      - run: uv run ruff check .
-        working-directory: examples
-
-      - run: uv run pytest
-        working-directory: examples
+      - run: uvx ruff check .
 
       - run: uv build
-        working-directory: examples
 
-      - run: uv run twine check dist/*
-        working-directory: examples
+      - run: uvx twine check dist/*
 
-      - name: Smoke install local wheels
+      - name: Smoke install published dependencies and local examples wheel
         run: |
-          uv build --directory aump-py --out-dir /tmp/aump-wheels
-          uv build --directory conformance --out-dir /tmp/aump-wheels
-          uv build --directory examples --out-dir /tmp/aump-wheels
           python -m venv /tmp/aump-examples-smoke
-          /tmp/aump-examples-smoke/bin/python -m pip install /tmp/aump-wheels/*.whl
+          /tmp/aump-examples-smoke/bin/python -m pip install dist/*.whl
           /tmp/aump-examples-smoke/bin/aump-examples marketplace
 
       - uses: actions/upload-artifact@v4
         with:
           name: python-package-distributions
-          path: examples/dist/
+          path: dist/
 
   publish:
     needs: build

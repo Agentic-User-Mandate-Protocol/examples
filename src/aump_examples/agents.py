@@ -6,6 +6,7 @@ from dataclasses import dataclass
 from typing import Any
 
 from aump import AumpRuntime, mandate_hash
+from aump.bridges import AUMP_A2A_EXTENSION_URI
 
 
 @dataclass
@@ -36,8 +37,9 @@ class BuyerAgent:
         )
 
         mandate_ref = {
-            "aump_mandate_id": self.mandate_id,
-            "aump_mandate_hash": mandate_hash(mandate),
+            "mandate_id": self.mandate_id,
+            "mandate_hash": mandate_hash(mandate),
+            "version": mandate.get("aump", {}).get("version", "0.1.0"),
         }
         offer_text = (
             f"I can offer {listing['price']['total_minor'] / 100:.2f} "
@@ -46,11 +48,18 @@ class BuyerAgent:
         return {
             "decision": decision,
             "a2a_message": {
+                "headers": {
+                    "A2A-Extensions": AUMP_A2A_EXTENSION_URI,
+                },
                 "message": {
+                    "messageId": f"msg_offer_{listing['id']}",
                     "role": "user",
                     "parts": [{"text": offer_text}],
-                    "metadata": mandate_ref,
-                }
+                    "extensions": [AUMP_A2A_EXTENSION_URI],
+                    "metadata": {
+                        AUMP_A2A_EXTENSION_URI: mandate_ref,
+                    },
+                },
             },
         }
 
@@ -121,7 +130,14 @@ class SellerAgent:
         a2a_message: dict[str, Any],
         listing: dict[str, Any],
     ) -> dict:
-        metadata = a2a_message["message"].get("metadata", {})
+        metadata = (
+            a2a_message["message"]
+            .get("metadata", {})
+            .get(
+                AUMP_A2A_EXTENSION_URI,
+                {},
+            )
+        )
         self.runtime.append_evidence(
             self.mandate_id,
             "offer_received",
@@ -129,19 +145,29 @@ class SellerAgent:
             "received",
             {
                 "listing_id": listing["id"],
-                "buyer_mandate_id": metadata.get("aump_mandate_id"),
-                "buyer_mandate_hash": metadata.get("aump_mandate_hash"),
+                "buyer_mandate_id": metadata.get("mandate_id"),
+                "buyer_mandate_hash": metadata.get("mandate_hash"),
             },
         )
+        seller_mandate = self.runtime.mandates[self.mandate_id]
         return {
+            "headers": {
+                "A2A-Extensions": AUMP_A2A_EXTENSION_URI,
+            },
             "message": {
+                "messageId": f"msg_reply_{listing['id']}",
                 "role": "agent",
                 "parts": [{"text": "Offer received. Ready to close if allowed."}],
+                "extensions": [AUMP_A2A_EXTENSION_URI],
                 "metadata": {
-                    "aump_mandate_id": self.mandate_id,
-                    "aump_mandate_hash": mandate_hash(
-                        self.runtime.mandates[self.mandate_id]
-                    ),
+                    AUMP_A2A_EXTENSION_URI: {
+                        "mandate_id": self.mandate_id,
+                        "mandate_hash": mandate_hash(seller_mandate),
+                        "version": seller_mandate.get("aump", {}).get(
+                            "version",
+                            "0.1.0",
+                        ),
+                    },
                 },
-            }
+            },
         }

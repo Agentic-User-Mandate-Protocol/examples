@@ -133,7 +133,7 @@ def _run_checkout_escalation(runtime: AumpRuntime) -> dict[str, Any]:
     bridge_ok, bridge_errors = validate_bridge(ucp_payload, "ucp_reference")
     runtime.append_evidence(
         mandate_id,
-        "checkout_escalation_evaluated",
+        "approval_requested",
         action["summary"],
         decision["decision"],
         {

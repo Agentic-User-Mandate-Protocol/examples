@@ -30,7 +30,7 @@ class BuyerAgent:
         decision = self.runtime.evaluate_action(self.mandate_id, action)
         self.runtime.append_evidence(
             self.mandate_id,
-            "offer_evaluated",
+            "offer_sent",
             action["summary"],
             decision["decision"],
             {"listing_id": listing["id"], "reason_codes": decision["reason_codes"]},
@@ -82,9 +82,12 @@ class BuyerAgent:
             },
         )
         decision = self.runtime.evaluate_action(self.mandate_id, action)
+        event_type = (
+            "deal_accepted" if decision["decision"] == "allowed" else "deal_denied"
+        )
         self.runtime.append_evidence(
             self.mandate_id,
-            "deal_acceptance_evaluated",
+            event_type,
             action["summary"],
             decision["decision"],
             {

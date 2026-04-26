@@ -6,7 +6,6 @@ from dataclasses import dataclass
 from typing import Any
 
 from aump import AumpRuntime, mandate_hash
-from aump.bridges import AUMP_A2A_EXTENSION_URI
 
 
 @dataclass
@@ -17,7 +16,6 @@ class BuyerAgent:
     mandate_id: str
 
     def make_offer_message(self, listing: dict[str, Any]) -> dict[str, Any]:
-        mandate = self.runtime.mandates[self.mandate_id]
         action = {
             "type": "make_offer",
             "summary": f"Offer on {listing['title']}.",
@@ -36,31 +34,18 @@ class BuyerAgent:
             {"listing_id": listing["id"], "reason_codes": decision["reason_codes"]},
         )
 
-        mandate_ref = {
-            "mandate_id": self.mandate_id,
-            "mandate_hash": mandate_hash(mandate),
-            "version": mandate.get("aump", {}).get("version", "0.1.0"),
-        }
         offer_text = (
             f"I can offer {listing['price']['total_minor'] / 100:.2f} "
             f"{listing['price']['currency']} for {listing['title']}."
         )
         return {
             "decision": decision,
-            "a2a_message": {
-                "headers": {
-                    "A2A-Extensions": AUMP_A2A_EXTENSION_URI,
-                },
-                "message": {
-                    "messageId": f"msg_offer_{listing['id']}",
-                    "role": "user",
-                    "parts": [{"text": offer_text}],
-                    "extensions": [AUMP_A2A_EXTENSION_URI],
-                    "metadata": {
-                        AUMP_A2A_EXTENSION_URI: mandate_ref,
-                    },
-                },
-            },
+            "a2a_message": self.runtime.a2a_message(
+                self.mandate_id,
+                message_id=f"msg_offer_{listing['id']}",
+                role="user",
+                parts=[{"text": offer_text}],
+            ),
         }
 
     def accept_listing(self, listing: dict[str, Any]) -> dict[str, Any]:
@@ -133,14 +118,15 @@ class SellerAgent:
         a2a_message: dict[str, Any],
         listing: dict[str, Any],
     ) -> dict:
-        metadata = (
-            a2a_message["message"]
-            .get("metadata", {})
-            .get(
-                AUMP_A2A_EXTENSION_URI,
-                {},
-            )
-        )
+        validation = self.runtime.validate_a2a_message(a2a_message)
+        if not validation["valid"]:
+            return {
+                "accepted": False,
+                "a2a_validation": validation,
+                "errors": validation["errors"],
+            }
+
+        metadata = validation["mandate_ref"]
         self.runtime.append_evidence(
             self.mandate_id,
             "offer_received",
@@ -153,24 +139,13 @@ class SellerAgent:
             },
         )
         seller_mandate = self.runtime.mandates[self.mandate_id]
-        return {
-            "headers": {
-                "A2A-Extensions": AUMP_A2A_EXTENSION_URI,
-            },
-            "message": {
-                "messageId": f"msg_reply_{listing['id']}",
-                "role": "agent",
-                "parts": [{"text": "Offer received. Ready to close if allowed."}],
-                "extensions": [AUMP_A2A_EXTENSION_URI],
-                "metadata": {
-                    AUMP_A2A_EXTENSION_URI: {
-                        "mandate_id": self.mandate_id,
-                        "mandate_hash": mandate_hash(seller_mandate),
-                        "version": seller_mandate.get("aump", {}).get(
-                            "version",
-                            "0.1.0",
-                        ),
-                    },
-                },
-            },
-        }
+        reply = self.runtime.a2a_message(
+            self.mandate_id,
+            message_id=f"msg_reply_{listing['id']}",
+            role="agent",
+            parts=[{"text": "Offer received. Ready to close if allowed."}],
+        )
+        reply["accepted"] = True
+        reply["a2a_validation"] = validation
+        reply["seller_mandate_hash"] = mandate_hash(seller_mandate)
+        return reply

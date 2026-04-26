@@ -7,16 +7,18 @@ from typing import Any
 
 from aump import AumpRuntime, validate_bridge
 from aump.policy import parse_datetime
+from aump_conformance.resources import bundled_fixtures_path
 from aump_conformance.runner import run_suite
 
 from aump_examples.agents import BuyerAgent, SellerAgent
 from aump_examples.jsonio import load_json
-from aump_examples.paths import CONFORMANCE_FIXTURES, DATA_DIR
+from aump_examples.paths import DATA_DIR
 
 
 def run_marketplace_proof() -> dict[str, Any]:
     """Run a deterministic marketplace scenario backed by AUMP evaluation."""
-    conformance_report = run_suite(CONFORMANCE_FIXTURES)
+    with bundled_fixtures_path() as fixtures:
+        conformance_report = run_suite(fixtures)
     mandates = _load_mandates()
     listings = {
         "ping_pong": load_json(DATA_DIR / "listings" / "ping-pong-balls.json"),
@@ -63,6 +65,8 @@ def run_marketplace_proof() -> dict[str, Any]:
                 "bridge_errors": offer_bridge_errors,
             },
             "seller_reply": {
+                "accepted": seller_reply.get("accepted", False),
+                "a2a_validation": seller_reply.get("a2a_validation"),
                 "bridge_valid": seller_bridge_ok,
                 "bridge_errors": seller_bridge_errors,
             },

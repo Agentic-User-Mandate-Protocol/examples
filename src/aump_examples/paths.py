@@ -2,9 +2,17 @@
 
 from __future__ import annotations
 
+from importlib.resources import files
 from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
-DATA_DIR = REPO_ROOT / "data"
-CONFORMANCE_DIR = REPO_ROOT.parent / "conformance"
-CONFORMANCE_FIXTURES = CONFORMANCE_DIR / "fixtures"
+
+
+def _data_dir() -> Path:
+    packaged = files("aump_examples").joinpath("data")
+    if packaged.is_dir():
+        return Path(str(packaged))
+    return REPO_ROOT / "data"
+
+
+DATA_DIR = _data_dir()

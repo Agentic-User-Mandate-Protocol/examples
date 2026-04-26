@@ -1,0 +1,104 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  package:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: astral-sh/setup-uv@v8.1.0
+
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.11"
+
+      - run: uvx ruff check .
+
+      - run: uv build
+
+      - run: uvx twine check dist/*
+
+  integration:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check sibling repository access
+        id: sibling_access
+        env:
+          AUMP_CI_READ_TOKEN: ${{ secrets.AUMP_CI_READ_TOKEN }}
+        run: |
+          if [ -z "$AUMP_CI_READ_TOKEN" ]; then
+            echo "available=false" >> "$GITHUB_OUTPUT"
+            echo "::notice::Set AUMP_CI_READ_TOKEN to run private sibling-repo integration checks."
+          else
+            echo "available=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - uses: actions/checkout@v6
+        if: steps.sibling_access.outputs.available == 'true'
+        with:
+          path: examples
+          token: ${{ secrets.AUMP_CI_READ_TOKEN }}
+
+      - uses: actions/checkout@v6
+        if: steps.sibling_access.outputs.available == 'true'
+        with:
+          repository: Agentic-User-Mandate-Protocol/aump-py
+          path: aump-py
+          token: ${{ secrets.AUMP_CI_READ_TOKEN }}
+
+      - uses: actions/checkout@v6
+        if: steps.sibling_access.outputs.available == 'true'
+        with:
+          repository: Agentic-User-Mandate-Protocol/conformance
+          path: conformance
+          token: ${{ secrets.AUMP_CI_READ_TOKEN }}
+
+      - uses: astral-sh/setup-uv@v8.1.0
+        if: steps.sibling_access.outputs.available == 'true'
+
+      - uses: actions/setup-python@v6
+        if: steps.sibling_access.outputs.available == 'true'
+        with:
+          python-version: "3.11"
+
+      - run: uv sync
+        if: steps.sibling_access.outputs.available == 'true'
+        working-directory: examples
+
+      - run: uv run ruff check .
+        if: steps.sibling_access.outputs.available == 'true'
+        working-directory: examples
+
+      - run: uv run pytest
+        if: steps.sibling_access.outputs.available == 'true'
+        working-directory: examples
+
+      - run: uv run aump-examples marketplace
+        if: steps.sibling_access.outputs.available == 'true'
+        working-directory: examples
+
+      - run: uv build
+        if: steps.sibling_access.outputs.available == 'true'
+        working-directory: examples
+
+      - run: uv run twine check dist/*
+        if: steps.sibling_access.outputs.available == 'true'
+        working-directory: examples
+
+      - name: Smoke install local wheels
+        if: steps.sibling_access.outputs.available == 'true'
+        run: |
+          uv build --directory aump-py --out-dir /tmp/aump-wheels
+          uv build --directory conformance --out-dir /tmp/aump-wheels
+          uv build --directory examples --out-dir /tmp/aump-wheels
+          python -m venv /tmp/aump-examples-smoke
+          /tmp/aump-examples-smoke/bin/python -m pip install /tmp/aump-wheels/*.whl
+          /tmp/aump-examples-smoke/bin/aump-examples marketplace

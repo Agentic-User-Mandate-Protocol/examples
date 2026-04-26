@@ -1,3 +1,5 @@
+from aump.schemas import SchemaRegistry
+
 from aump_examples.marketplace import run_marketplace_proof
 
 
@@ -15,3 +17,11 @@ def test_marketplace_exercises_required_decisions() -> None:
     assert scenarios["private_disclosure"]["decision"] == "denied"
     assert "disclosure_denied" in scenarios["private_disclosure"]["reason_codes"]
     assert scenarios["checkout_escalation"]["decision"] == "requires_escalation"
+
+
+def test_marketplace_evidence_events_validate_schema() -> None:
+    registry = SchemaRegistry.bundled()
+    proof = run_marketplace_proof()
+    assert proof["evidence"]
+    for event in proof["evidence"]:
+        assert registry.validate("evidence-event", event) == []

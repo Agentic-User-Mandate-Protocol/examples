@@ -44,7 +44,7 @@ Expected summary:
 
 ```text
 AUMP marketplace proof
-conformance: 22/22 passed
+conformance: 29/29 passed
 offer message: allowed
 accept ping pong balls: allowed
 over-budget offer: denied

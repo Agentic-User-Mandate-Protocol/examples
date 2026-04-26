@@ -1,0 +1,76 @@
+name: Publish
+
+on:
+  release:
+    types: [published]
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          path: examples
+
+      - uses: actions/checkout@v6
+        with:
+          repository: Agentic-User-Mandate-Protocol/aump-py
+          path: aump-py
+
+      - uses: actions/checkout@v6
+        with:
+          repository: Agentic-User-Mandate-Protocol/conformance
+          path: conformance
+
+      - uses: astral-sh/setup-uv@v8.1.0
+
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.11"
+
+      - run: uv sync
+        working-directory: examples
+
+      - run: uv run ruff check .
+        working-directory: examples
+
+      - run: uv run pytest
+        working-directory: examples
+
+      - run: uv build
+        working-directory: examples
+
+      - run: uv run twine check dist/*
+        working-directory: examples
+
+      - name: Smoke install local wheels
+        run: |
+          uv build --directory aump-py --out-dir /tmp/aump-wheels
+          uv build --directory conformance --out-dir /tmp/aump-wheels
+          uv build --directory examples --out-dir /tmp/aump-wheels
+          python -m venv /tmp/aump-examples-smoke
+          /tmp/aump-examples-smoke/bin/python -m pip install /tmp/aump-wheels/*.whl
+          /tmp/aump-examples-smoke/bin/aump-examples marketplace
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: python-package-distributions
+          path: examples/dist/
+
+  publish:
+    needs: build
+    runs-on: ubuntu-latest
+    environment: pypi
+    permissions:
+      id-token: write
+      contents: read
+    steps:
+      - uses: actions/download-artifact@v5
+        with:
+          name: python-package-distributions
+          path: dist/
+
+      - uses: pypa/gh-action-pypi-publish@release/v1

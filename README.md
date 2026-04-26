@@ -25,13 +25,17 @@ conformance suite first. If the contract fails, the marketplace proof fails.
 
 ## Workspace Requirement
 
-This repo expects the org repos to be cloned as siblings:
+For development, this repo expects the Python SDK and conformance repos to be
+cloned as siblings:
 
 ```text
 projects/
   conformance/
   examples/
 ```
+
+When installed from PyPI, the example uses packaged demo data and the bundled
+conformance fixture corpus from `aump-conformance`.
 
 ## Run
 

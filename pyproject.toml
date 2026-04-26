@@ -5,13 +5,29 @@ description = "Reference AUMP agentic marketplace examples"
 readme = "README.md"
 requires-python = ">=3.11"
 license = { text = "Apache-2.0" }
+keywords = ["agents", "ai", "mandates", "protocol", "examples"]
 authors = [
   { name = "Agentic User Mandate Protocol Authors" }
+]
+classifiers = [
+  "Development Status :: 3 - Alpha",
+  "Intended Audience :: Developers",
+  "License :: OSI Approved :: Apache Software License",
+  "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
+  "Topic :: Software Development :: Testing"
 ]
 dependencies = [
   "aump",
   "aump-conformance"
 ]
+
+[project.urls]
+Homepage = "https://usermandateprotocol.com/"
+Documentation = "https://usermandateprotocol.com/examples/marketplace/"
+Repository = "https://github.com/Agentic-User-Mandate-Protocol/examples"
+Issues = "https://github.com/Agentic-User-Mandate-Protocol/examples/issues"
 
 [project.scripts]
 aump-examples = "aump_examples.cli:main"
@@ -19,7 +35,8 @@ aump-examples = "aump_examples.cli:main"
 [dependency-groups]
 dev = [
   "pytest>=8.3.0",
-  "ruff>=0.14.0"
+  "ruff>=0.14.0",
+  "twine>=6.0.0"
 ]
 
 [build-system]
@@ -28,6 +45,9 @@ build-backend = "hatchling.build"
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/aump_examples"]
+
+[tool.hatch.build.targets.wheel.force-include]
+"data" = "aump_examples/data"
 
 [tool.uv.sources]
 aump = { path = "../aump-py", editable = true }
